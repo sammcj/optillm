@@ -204,12 +204,17 @@ def run(system_prompt: str, initial_query: str, client, model: str,
         if not supports_system_messages:
             logger.info(f"Using fallback message formatting for {model} (no system message support)")
         
+        # Strip stream parameter to force complete response
+        # server.py will handle converting to SSE streaming format if needed
+        api_config = dict(request_config or {})
+        api_config.pop('stream', None)
+
         response = proxy_client.chat.completions.create(
             model=model,
             messages=messages,
-            **(request_config or {})
+            **api_config
         )
-        
+
         # Return full response dict to preserve all usage information
         response_dict = response.model_dump() if hasattr(response, 'model_dump') else response
         return response_dict, 0
