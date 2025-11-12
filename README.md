@@ -9,16 +9,16 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/codelion/optillm/stargazers"><img src="https://img.shields.io/github/stars/codelion/optillm?style=social" alt="GitHub stars"></a>
+  <a href="https://github.com/algorithmicsuperintelligence/optillm/stargazers"><img src="https://img.shields.io/github/stars/algorithmicsuperintelligence/optillm?style=social" alt="GitHub stars"></a>
   <a href="https://pypi.org/project/optillm/"><img src="https://img.shields.io/pypi/v/optillm" alt="PyPI version"></a>
   <a href="https://pypi.org/project/optillm/"><img src="https://img.shields.io/pypi/dm/optillm" alt="PyPI downloads"></a>
-  <a href="https://github.com/codelion/optillm/blob/main/LICENSE"><img src="https://img.shields.io/github/license/codelion/optillm" alt="License"></a>
+  <a href="https://github.com/algorithmicsuperintelligence/optillm/blob/main/LICENSE"><img src="https://img.shields.io/github/license/algorithmicsuperintelligence/optillm" alt="License"></a>
 </p>
 
 <p align="center">
   <a href="https://huggingface.co/spaces/codelion/optillm">🤗 HuggingFace Space</a> •
   <a href="https://colab.research.google.com/drive/1SpuUb8d9xAoTh32M-9wJsB50AOH54EaH?usp=sharing">📓 Colab Demo</a> •
-  <a href="https://github.com/codelion/optillm/discussions">💬 Discussions</a>
+  <a href="https://github.com/algorithmicsuperintelligence/optillm/discussions">💬 Discussions</a>
 </p>
 
 ---
@@ -96,8 +96,8 @@ optillm
 ### Using docker
 
 ```bash
-docker pull ghcr.io/codelion/optillm:latest
-docker run -p 8000:8000 ghcr.io/codelion/optillm:latest
+docker pull ghcr.io/algorithmicsuperintelligence/optillm:latest
+docker run -p 8000:8000 ghcr.io/algorithmicsuperintelligence/optillm:latest
 2024-10-22 07:45:05,612 - INFO - Loaded plugin: privacy
 2024-10-22 07:45:06,293 - INFO - Loaded plugin: memory
 2024-10-22 07:45:06,293 - INFO - Starting server with approach: auto
@@ -111,10 +111,10 @@ docker run -p 8000:8000 ghcr.io/codelion/optillm:latest
 
 ```bash
 # Proxy-only (smallest)
-docker pull ghcr.io/codelion/optillm:latest-proxy
+docker pull ghcr.io/algorithmicsuperintelligence/optillm:latest-proxy
 
 # Offline (largest, includes pre-downloaded models)
-docker pull ghcr.io/codelion/optillm:latest-offline
+docker pull ghcr.io/algorithmicsuperintelligence/optillm:latest-offline
 ```
 
 ### Install from source
@@ -122,7 +122,7 @@ docker pull ghcr.io/codelion/optillm:latest-offline
 Clone the repository with `git` and use `pip install` to setup the dependencies.
 
 ```bash
-git clone https://github.com/codelion/optillm.git
+git clone https://github.com/algorithmicsuperintelligence/optillm.git
 cd optillm
 python3 -m venv .venv
 source .venv/bin/activate
@@ -310,7 +310,7 @@ doesn't have an OpenAI API compatible endpoint (like Google or Anthropic) you ca
 
 The following sequence diagram illustrates how the request and responses go through optillm.
 
-![Sequance diagram showing optillm in use](https://raw.githubusercontent.com/codelion/optillm/main/optillm-sequence-diagram.png)
+![Sequance diagram showing optillm in use](https://raw.githubusercontent.com/algorithmicsuperintelligence/optillm/main/optillm-sequence-diagram.png)
 
 In the diagram:
 - `A` is an existing tool (like [oobabooga](https://github.com/oobabooga/text-generation-webui/)), framework (like [patchwork](https://github.com/patched-codes/patchwork))
@@ -706,7 +706,7 @@ optillm supports various command-line arguments for configuration. When using Do
 
 ## Running with Docker
 
-optillm can optionally be built and run using Docker and the provided [Dockerfile](https://github.com/codelion/optillm/blob/main/Dockerfile).
+optillm can optionally be built and run using Docker and the provided [Dockerfile](https://github.com/algorithmicsuperintelligence/optillm/blob/main/Dockerfile).
 
 ### Using Docker Compose
 
@@ -860,14 +860,14 @@ Configuration: 3 agents, 2-pass verification, thinking tags disabled for proofs
 
 ### moa-gpt-4o-mini on Arena-Hard-Auto (Aug 2024)
 
-![Results showing Mixture of Agents approach using gpt-4o-mini on Arena Hard Auto Benchmark](https://raw.githubusercontent.com/codelion/optillm/main/moa-results.png)
+![Results showing Mixture of Agents approach using gpt-4o-mini on Arena Hard Auto Benchmark](https://raw.githubusercontent.com/algorithmicsuperintelligence/optillm/main/moa-results.png)
 
 ### optillm with Patchwork (July 2024)
 
 Since optillm is a drop-in replacement for OpenAI API you can easily integrate it with existing tools and frameworks using the OpenAI client. We used optillm with [patchwork](https://github.com/patched-codes/patchwork) which is an open-source framework that automates development gruntwork like PR reviews, bug fixing, security patching using workflows
 called patchflows. We saw huge performance gains across all the supported patchflows as shown below when using the mixture of agents approach (moa).
 
-![Results showing optillm mixture of agents approach used with patchflows](https://raw.githubusercontent.com/codelion/optillm/main/moa-patchwork-results.png)
+![Results showing optillm mixture of agents approach used with patchflows](https://raw.githubusercontent.com/algorithmicsuperintelligence/optillm/main/moa-patchwork-results.png)
 
 ## Testing
 
@@ -913,13 +913,13 @@ See `tests/README.md` for more details on the test structure and how to write ne
 
 We ❤️ contributions! OptiLLM is built by the community, for the community.
 
-- 🐛 **Found a bug?** [Open an issue](https://github.com/codelion/optillm/issues/new)
-- 💡 **Have an idea?** [Start a discussion](https://github.com/codelion/optillm/discussions)
-- 🔧 **Want to code?** Check out [good first issues](https://github.com/codelion/optillm/labels/good%20first%20issue)
+- 🐛 **Found a bug?** [Open an issue](https://github.com/algorithmicsuperintelligence/optillm/issues/new)
+- 💡 **Have an idea?** [Start a discussion](https://github.com/algorithmicsuperintelligence/optillm/discussions)
+- 🔧 **Want to code?** Check out [good first issues](https://github.com/algorithmicsuperintelligence/optillm/labels/good%20first%20issue)
 
 ### Development Setup
 ```bash
-git clone https://github.com/codelion/optillm.git
+git clone https://github.com/algorithmicsuperintelligence/optillm.git
 cd optillm
 python -m venv .venv
 source .venv/bin/activate  # or `.venv\Scripts\activate` on Windows
@@ -967,7 +967,7 @@ If you use this library in your research, please cite:
   author = {Asankhaya Sharma},
   year = {2024},
   publisher = {GitHub},
-  url = {https://github.com/codelion/optillm}
+  url = {https://github.com/algorithmicsuperintelligence/optillm}
 }
 ```
 
@@ -978,5 +978,5 @@ If you use this library in your research, please cite:
 </p>
 
 <p align="center">
-  ⭐ <a href="https://github.com/codelion/optillm">Star us on GitHub</a> if you find OptiLLM useful!
+  ⭐ <a href="https://github.com/algorithmicsuperintelligence/optillm">Star us on GitHub</a> if you find OptiLLM useful!
 </p>
