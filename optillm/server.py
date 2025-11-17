@@ -714,8 +714,11 @@ def proxy():
     request_config.update({
         "stream": stream,
         "n": n,
-        "response_format": response_format,  # Add response_format to config
     })
+
+    # Only add response_format if it's not None
+    if response_format is not None:
+        request_config['response_format'] = response_format
 
     # Add token limits to request_config with proper priority
     if max_completion_tokens is not None:
