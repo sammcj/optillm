@@ -15,8 +15,14 @@ def extract_code_from_prompt(text):
         logger.warning("Could not extract code from prompt. Returning original text.")
         return text
 
-def round_trip_optimization(system_prompt: str, initial_query: str, client, model: str, request_id: str = None) -> str:
+def round_trip_optimization(system_prompt: str, initial_query: str, client, model: str, request_config: dict = None, request_id: str = None) -> str:
     rto_completion_tokens = 0
+
+    # Extract max_tokens from request_config with default
+    max_tokens = 4096
+    if request_config:
+        max_tokens = request_config.get('max_tokens', max_tokens)
+
     messages = [{"role": "system", "content": system_prompt},
                 {"role": "user", "content": initial_query}]
 
@@ -24,7 +30,7 @@ def round_trip_optimization(system_prompt: str, initial_query: str, client, mode
     provider_request = {
         "model": model,
         "messages": messages,
-        "max_tokens": 4096,
+        "max_tokens": max_tokens,
         "n": 1,
         "temperature": 0.1
     }
@@ -64,7 +70,7 @@ def round_trip_optimization(system_prompt: str, initial_query: str, client, mode
     provider_request = {
         "model": model,
         "messages": messages,
-        "max_tokens": 4096,
+        "max_tokens": max_tokens,
         "n": 1,
         "temperature": 0.1
     }
@@ -89,7 +95,7 @@ def round_trip_optimization(system_prompt: str, initial_query: str, client, mode
     provider_request = {
         "model": model,
         "messages": messages,
-        "max_tokens": 4096,
+        "max_tokens": max_tokens,
         "n": 1,
         "temperature": 0.1
     }

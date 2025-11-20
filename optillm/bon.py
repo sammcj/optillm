@@ -4,8 +4,13 @@ from optillm import conversation_logger
 
 logger = logging.getLogger(__name__)
 
-def best_of_n_sampling(system_prompt: str, initial_query: str, client, model: str, n: int = 3, request_id: str = None) -> str:
+def best_of_n_sampling(system_prompt: str, initial_query: str, client, model: str, n: int = 3, request_config: dict = None, request_id: str = None) -> str:
     bon_completion_tokens = 0
+
+    # Extract max_tokens from request_config with default
+    max_tokens = 4096
+    if request_config:
+        max_tokens = request_config.get('max_tokens', max_tokens)
 
     messages = [{"role": "system", "content": system_prompt},
                 {"role": "user", "content": initial_query}]
@@ -17,7 +22,7 @@ def best_of_n_sampling(system_prompt: str, initial_query: str, client, model: st
         provider_request = {
             "model": model,
             "messages": messages,
-            "max_tokens": 4096,
+            "max_tokens": max_tokens,
             "n": n,
             "temperature": 1
         }
@@ -50,7 +55,7 @@ def best_of_n_sampling(system_prompt: str, initial_query: str, client, model: st
                 provider_request = {
                     "model": model,
                     "messages": messages,
-                    "max_tokens": 4096,
+                    "max_tokens": max_tokens,
                     "temperature": 1
                 }
                 response = client.chat.completions.create(**provider_request)

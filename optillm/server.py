@@ -414,33 +414,33 @@ def execute_single_approach(approach, system_prompt, initial_query, client, mode
             return response, 0
         elif approach == 'mcts':
             return chat_with_mcts(system_prompt, initial_query, client, model, server_config['mcts_simulations'],
-                                            server_config['mcts_exploration'], server_config['mcts_depth'], request_id)
+                                            server_config['mcts_exploration'], server_config['mcts_depth'], request_config, request_id)
         elif approach == 'bon':
-            return  best_of_n_sampling(system_prompt, initial_query, client, model, server_config['best_of_n'], request_id)
+            return  best_of_n_sampling(system_prompt, initial_query, client, model, server_config['best_of_n'], request_config, request_id)
         elif approach == 'moa':
-            return mixture_of_agents(system_prompt, initial_query, client, model, request_id)
+            return mixture_of_agents(system_prompt, initial_query, client, model, request_config, request_id)
         elif approach == 'rto':
-            return round_trip_optimization(system_prompt, initial_query, client, model, request_id)
+            return round_trip_optimization(system_prompt, initial_query, client, model, request_config, request_id)
         elif approach == 'z3':
-            z3_solver = Z3SymPySolverSystem(system_prompt, client, model, request_id=request_id)
+            z3_solver = Z3SymPySolverSystem(system_prompt, client, model, request_config=request_config, request_id=request_id)
             return z3_solver.process_query(initial_query)
         elif approach == "self_consistency":
-            return advanced_self_consistency_approach(system_prompt, initial_query, client, model, request_id)
+            return advanced_self_consistency_approach(system_prompt, initial_query, client, model, request_config, request_id)
         elif approach == "pvg":
-            return inference_time_pv_game(system_prompt, initial_query, client, model, request_id)
+            return inference_time_pv_game(system_prompt, initial_query, client, model, request_config=request_config, request_id=request_id)
         elif approach == "rstar":
             rstar = RStar(system_prompt, client, model,
                           max_depth=server_config['rstar_max_depth'], num_rollouts=server_config['rstar_num_rollouts'],
-                          c=server_config['rstar_c'], request_id=request_id)
+                          c=server_config['rstar_c'], request_config=request_config, request_id=request_id)
             return rstar.solve(initial_query)
         elif approach == "cot_reflection":
             return cot_reflection(system_prompt, initial_query, client, model, return_full_response=server_config['return_full_response'], request_config=request_config, request_id=request_id)
         elif approach == 'plansearch':
-            return plansearch(system_prompt, initial_query, client, model, n=server_config['n'], request_id=request_id)
+            return plansearch(system_prompt, initial_query, client, model, n=server_config['n'], request_config=request_config, request_id=request_id)
         elif approach == 'leap':
-            return leap(system_prompt, initial_query, client, model, request_id)
+            return leap(system_prompt, initial_query, client, model, request_config, request_id)
         elif approach == 're2':
-            return re2_approach(system_prompt, initial_query, client, model, n=server_config['n'], request_id=request_id)
+            return re2_approach(system_prompt, initial_query, client, model, n=server_config['n'], request_config=request_config, request_id=request_id)
         elif approach == 'cepo':
             return cepo(system_prompt, initial_query, client, model, cepo_config, request_id)
         elif approach == 'mars':

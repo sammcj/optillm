@@ -10,7 +10,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 class LEAP:
-    def __init__(self, system_prompt: str, client, model: str, request_id: str = None):
+    def __init__(self, system_prompt: str, client, model: str, request_config: dict = None, request_id: str = None):
         self.system_prompt = system_prompt
         self.client = client
         self.model = model
@@ -18,6 +18,11 @@ class LEAP:
         self.low_level_principles = []
         self.high_level_principles = []
         self.leap_completion_tokens = 0
+
+        # Extract max_tokens from request_config with default
+        self.max_tokens = 4096
+        if request_config:
+            self.max_tokens = request_config.get('max_tokens', self.max_tokens)
 
     def extract_output(self, text: str) -> str:
         match = re.search(r'<output>(.*?)(?:</output>|$)', text, re.DOTALL)
@@ -29,7 +34,7 @@ class LEAP:
         # Prepare request for logging
         provider_request = {
             "model": self.model,
-            "max_tokens": 4096,
+            "max_tokens": self.max_tokens,
             "messages": [
                 {"role": "system", "content": self.system_prompt},
                 {"role": "user", "content": f"""
@@ -83,7 +88,7 @@ class LEAP:
             # Prepare request for logging
             provider_request = {
                 "model": self.model,
-                "max_tokens": 4096,
+                "max_tokens": self.max_tokens,
                 "messages": [
                     {"role": "system", "content": self.system_prompt},
                     {"role": "user", "content": f"""
@@ -116,7 +121,7 @@ class LEAP:
             # Prepare request for logging
             provider_request = {
                 "model": self.model,
-                "max_tokens": 4096,
+                "max_tokens": self.max_tokens,
                 "messages": [
                     {"role": "system", "content": self.system_prompt},
                     {"role": "user", "content": f"""
@@ -152,7 +157,7 @@ class LEAP:
         # Prepare request for logging
         provider_request = {
             "model": self.model,
-            "max_tokens": 4096,
+            "max_tokens": self.max_tokens,
             "messages": [
                 {"role": "system", "content": self.system_prompt},
                 {"role": "user", "content": f"""
@@ -185,7 +190,7 @@ class LEAP:
         # Prepare request for logging
         provider_request = {
             "model": self.model,
-            "max_tokens": 4096,
+            "max_tokens": self.max_tokens,
             "messages": [
                 {"role": "system", "content": self.system_prompt},
                 {"role": "user", "content": f"""
@@ -220,6 +225,6 @@ class LEAP:
         
         return self.apply_principles(initial_query)
 
-def leap(system_prompt: str, initial_query: str, client, model: str, request_id: str = None) -> str:
-    leap_solver = LEAP(system_prompt, client, model, request_id)
+def leap(system_prompt: str, initial_query: str, client, model: str, request_config: dict = None, request_id: str = None) -> str:
+    leap_solver = LEAP(system_prompt, client, model, request_config=request_config, request_id=request_id)
     return leap_solver.solve(initial_query), leap_solver.leap_completion_tokens

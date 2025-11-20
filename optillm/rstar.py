@@ -23,17 +23,23 @@ class Node:
         self.value = 0.0
 
 class RStar:
-    def __init__(self, system: str, client, model: str, max_depth: int = 3, num_rollouts: int = 5, c: float = 1.4, request_id: str = None):
+    def __init__(self, system: str, client, model: str, max_depth: int = 3, num_rollouts: int = 5, c: float = 1.4, request_config: dict = None, request_id: str = None):
         self.client = client
         self.model_name = model
         self.max_depth = max_depth
         self.num_rollouts = num_rollouts
         self.c = c
         self.actions = ["A1", "A2", "A3", "A4", "A5"]
-        self.original_question = None 
+        self.original_question = None
         self.system = system
         self.rstar_completion_tokens = 0
         self.request_id = request_id
+
+        # Extract max_tokens from request_config with default
+        self.max_tokens = 4096
+        if request_config:
+            self.max_tokens = request_config.get('max_tokens', self.max_tokens)
+
         logger.debug(f"Initialized RStar with model: {model}, max_depth: {max_depth}, num_rollouts: {num_rollouts}")
 
     async def generate_response_async(self, prompt: str) -> str:
@@ -102,7 +108,7 @@ class RStar:
                 {"role": "system", "content": "You are a helpful assistant focused on solving mathematical problems. Stick to the given question and avoid introducing new scenarios."},
                 {"role": "user", "content": prompt}
             ],
-            "max_tokens": 4096,
+            "max_tokens": self.max_tokens,
             "temperature": 0.2
         }
         response = self.client.chat.completions.create(**provider_request)
