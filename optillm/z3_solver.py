@@ -133,13 +133,19 @@ def execute_code_in_process(code: str):
     return ("success", output_buffer.getvalue())
 
 class Z3SymPySolverSystem:
-    def __init__(self, system_prompt: str, client, model: str, timeout: int = 30, request_id: str = None):
+    def __init__(self, system_prompt: str, client, model: str, timeout: int = 30, request_config: dict = None, request_id: str = None):
         self.system_prompt = system_prompt
         self.model = model
         self.client = client
         self.timeout = timeout
         self.solver_completion_tokens = 0
         self.request_id = request_id
+
+        # Extract max_tokens from request_config with default
+        self.max_tokens = 4096
+        if request_config:
+            self.max_tokens = request_config.get('max_tokens', self.max_tokens)
+
         logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
     def process_query(self, query: str) -> str:
@@ -221,7 +227,7 @@ Response:
                 {"role": "system", "content": self.system_prompt},
                 {"role": "user", "content": response_prompt}
             ],
-            "max_tokens": 4096,
+            "max_tokens": self.max_tokens,
             "n": 1,
             "temperature": 0.1
         }
@@ -242,7 +248,7 @@ Response:
                 {"role": "system", "content": self.system_prompt},
                 {"role": "user", "content": query}
             ],
-            "max_tokens": 4096,
+            "max_tokens": self.max_tokens,
             "n": 1,
             "temperature": 0.1
         }

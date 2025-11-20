@@ -4,9 +4,15 @@ from optillm import conversation_logger
 
 logger = logging.getLogger(__name__)
 
-def mixture_of_agents(system_prompt: str, initial_query: str, client, model: str, request_id: str = None) -> str:
+def mixture_of_agents(system_prompt: str, initial_query: str, client, model: str, request_config: dict = None, request_id: str = None) -> str:
     logger.info(f"Starting mixture_of_agents function with model: {model}")
     moa_completion_tokens = 0
+
+    # Extract max_tokens from request_config with default
+    max_tokens = 4096
+    if request_config:
+        max_tokens = request_config.get('max_tokens', max_tokens)
+
     completions = []
 
     logger.debug(f"Generating initial completions for query: {initial_query}")
@@ -19,7 +25,7 @@ def mixture_of_agents(system_prompt: str, initial_query: str, client, model: str
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": initial_query}
             ],
-            "max_tokens": 4096,
+            "max_tokens": max_tokens,
             "n": 3,
             "temperature": 1
         }
@@ -59,7 +65,7 @@ def mixture_of_agents(system_prompt: str, initial_query: str, client, model: str
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": initial_query}
                     ],
-                    "max_tokens": 4096,
+                    "max_tokens": max_tokens,
                     "temperature": 1
                 }
                 
@@ -182,14 +188,14 @@ def mixture_of_agents(system_prompt: str, initial_query: str, client, model: str
     """
 
     logger.debug("Generating final response")
-    
+
     provider_request = {
         "model": model,
         "messages": [
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": final_prompt}
         ],
-        "max_tokens": 8192,
+        "max_tokens": max_tokens,
         "n": 1,
         "temperature": 0.1
     }

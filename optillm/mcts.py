@@ -26,7 +26,7 @@ class MCTSNode:
         self.value = 0
 
 class MCTS:
-    def __init__(self, simulation_depth, exploration_weight, client, model, request_id=None):
+    def __init__(self, simulation_depth, exploration_weight, client, model, request_config=None, request_id=None):
         self.simulation_depth = simulation_depth
         self.exploration_weight = exploration_weight
         self.root = None
@@ -36,6 +36,11 @@ class MCTS:
         self.model = model
         self.completion_tokens = 0
         self.request_id = request_id
+
+        # Extract max_tokens from request_config with default
+        self.max_tokens = 4096
+        if request_config:
+            self.max_tokens = request_config.get('max_tokens', self.max_tokens)
 
     def select(self, node: MCTSNode) -> MCTSNode:
         logger.debug(f"Selecting node. Current node visits: {node.visits}, value: {node.value}")
@@ -117,7 +122,7 @@ class MCTS:
         provider_request = {
             "model": self.model,
             "messages": messages,
-            "max_tokens": 4096,
+            "max_tokens": self.max_tokens,
             "n": n,
             "temperature": 1
         }
@@ -151,7 +156,7 @@ class MCTS:
         provider_request = {
             "model": self.model,
             "messages": messages,
-            "max_tokens": 1024,
+            "max_tokens": min(self.max_tokens, 1024),
             "n": 1,
             "temperature": 1
         }
@@ -220,11 +225,11 @@ class MCTS:
             logger.warning("Failed to parse evaluation score. Using default value 0.5")
             return 0.5  # Default to a neutral score if parsing fails
 
-def chat_with_mcts(system_prompt: str, initial_query: str, client, model: str, num_simulations: int = 2, exploration_weight: float = 0.2, 
-                   simulation_depth: int = 1, request_id: str = None) -> str:
+def chat_with_mcts(system_prompt: str, initial_query: str, client, model: str, num_simulations: int = 2, exploration_weight: float = 0.2,
+                   simulation_depth: int = 1, request_config: dict = None, request_id: str = None) -> str:
     logger.info("Starting chat with MCTS")
     logger.info(f"Parameters: num_simulations={num_simulations}, exploration_weight={exploration_weight}, simulation_depth={simulation_depth}")
-    mcts = MCTS(simulation_depth=simulation_depth, exploration_weight=exploration_weight, client=client, model=model, request_id=request_id)
+    mcts = MCTS(simulation_depth=simulation_depth, exploration_weight=exploration_weight, client=client, model=model, request_config=request_config, request_id=request_id)
     initial_state = DialogueState(system_prompt, [], initial_query)
     logger.info(f"Initial query: {initial_query}")
     final_state = mcts.search(initial_state, num_simulations)

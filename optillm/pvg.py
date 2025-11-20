@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 
 pvg_completion_tokens = 0
 
-def generate_solutions(client, system_prompt: str, query: str, model: str, num_solutions: int, is_sneaky: bool = False, temperature: float = 0.7, request_id: str = None) -> List[str]:
+def generate_solutions(client, system_prompt: str, query: str, model: str, num_solutions: int, is_sneaky: bool = False, temperature: float = 0.7, max_tokens: int = 4096, request_id: str = None) -> List[str]:
     global pvg_completion_tokens
     role = "sneaky" if is_sneaky else "helpful"
     logger.info(f"Generating {num_solutions} {role} solutions")
@@ -36,7 +36,7 @@ def generate_solutions(client, system_prompt: str, query: str, model: str, num_s
         "model": model,
         "messages": messages,
         "n": num_solutions,
-        "max_tokens": 4096,
+        "max_tokens": max_tokens,
         "temperature": temperature,
     }
     response = client.chat.completions.create(**provider_request)
@@ -151,10 +151,15 @@ def extract_answer(final_state: str) -> Tuple[str, float]:
     logger.warning("No answer found in the state.")
     return "", 0.0
 
-def inference_time_pv_game(system_prompt: str, initial_query: str, client, model: str, num_rounds: int = 2, num_solutions: int = 3, request_id: str = None) -> str:
+def inference_time_pv_game(system_prompt: str, initial_query: str, client, model: str, num_rounds: int = 2, num_solutions: int = 3, request_config: dict = None, request_id: str = None) -> str:
     global pvg_completion_tokens
     logger.info(f"Starting inference-time PV game with {num_rounds} rounds and {num_solutions} solutions per round")
-   
+
+    # Extract max_tokens from request_config with default
+    max_tokens = 4096
+    if request_config:
+        max_tokens = request_config.get('max_tokens', max_tokens)
+
     best_solution = ""
     best_score = -1
 
@@ -163,8 +168,8 @@ def inference_time_pv_game(system_prompt: str, initial_query: str, client, model
         
         temperature = max(0.2, 0.7 - (round * 0.1))
         
-        helpful_solutions = generate_solutions(client, system_prompt, initial_query, model, num_solutions, temperature=temperature, request_id=request_id)
-        sneaky_solutions = generate_solutions(client, system_prompt, initial_query, model, num_solutions, is_sneaky=True, temperature=temperature, request_id=request_id)
+        helpful_solutions = generate_solutions(client, system_prompt, initial_query, model, num_solutions, temperature=temperature, max_tokens=max_tokens, request_id=request_id)
+        sneaky_solutions = generate_solutions(client, system_prompt, initial_query, model, num_solutions, is_sneaky=True, temperature=temperature, max_tokens=max_tokens, request_id=request_id)
         all_solutions = helpful_solutions + sneaky_solutions
 
         scores = verify_solutions(client, system_prompt, initial_query, all_solutions, model, request_id=request_id)
@@ -198,7 +203,7 @@ def inference_time_pv_game(system_prompt: str, initial_query: str, client, model
             provider_request = {
                 "model": model,
                 "messages": messages,
-                "max_tokens": 1024,
+                "max_tokens": min(max_tokens, 1024),
                 "temperature": 0.5,
             }
             response = client.chat.completions.create(**provider_request)

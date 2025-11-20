@@ -4,22 +4,28 @@ from optillm import conversation_logger
 
 logger = logging.getLogger(__name__)
 
-def re2_approach(system_prompt, initial_query, client, model, n=1, request_id: str = None):
+def re2_approach(system_prompt, initial_query, client, model, n=1, request_config: dict = None, request_id: str = None):
     """
     Implement the RE2 (Re-Reading) approach for improved reasoning in LLMs.
-    
+
     Args:
     system_prompt (str): The system prompt to be used.
     initial_query (str): The initial user query.
     client: The OpenAI client object.
     model (str): The name of the model to use.
     n (int): Number of completions to generate.
-    
+    request_config (dict): Optional configuration including max_tokens.
+
     Returns:
     str or list: The generated response(s) from the model.
     """
     logger.info("Using RE2 approach for query processing")
     re2_completion_tokens = 0
+
+    # Extract max_tokens from request_config if provided
+    max_tokens = None
+    if request_config:
+        max_tokens = request_config.get('max_tokens')
     
     # Construct the RE2 prompt
     re2_prompt = f"{initial_query}\nRead the question again: {initial_query}"
@@ -35,6 +41,8 @@ def re2_approach(system_prompt, initial_query, client, model, n=1, request_id: s
             "messages": messages,
             "n": n
         }
+        if max_tokens is not None:
+            provider_request["max_tokens"] = max_tokens
         response = client.chat.completions.create(**provider_request)
         
         # Log provider call

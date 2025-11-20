@@ -7,13 +7,18 @@ from optillm import conversation_logger
 logger = logging.getLogger(__name__)
 
 class AdvancedSelfConsistency:
-    def __init__(self, client, model: str,  num_samples: int = 5, similarity_threshold: float = 0.8, request_id: str = None):
+    def __init__(self, client, model: str,  num_samples: int = 5, similarity_threshold: float = 0.8, request_config: dict = None, request_id: str = None):
         self.client = client
         self.model = model
         self.num_samples = num_samples
         self.similarity_threshold = similarity_threshold
         self.self_consistency_completion_tokens = 0
         self.request_id = request_id
+
+        # Extract max_tokens from request_config with default
+        self.max_tokens = 4096
+        if request_config:
+            self.max_tokens = request_config.get('max_tokens', self.max_tokens)
 
     def generate_responses(self, system_prompt: str, user_prompt: str) -> List[str]:
         responses = []
@@ -25,7 +30,7 @@ class AdvancedSelfConsistency:
                     {"role": "user", "content": user_prompt}
                 ],
                 "temperature": 1,
-                "max_tokens": 4096
+                "max_tokens": self.max_tokens
             }
             response = self.client.chat.completions.create(**provider_request)
             
@@ -83,8 +88,8 @@ class AdvancedSelfConsistency:
             "aggregated_result": aggregated_result
         }
 
-def advanced_self_consistency_approach(system_prompt: str, initial_query: str, client, model: str, request_id: str = None) -> str:
-    self_consistency = AdvancedSelfConsistency(client, model, request_id=request_id)
+def advanced_self_consistency_approach(system_prompt: str, initial_query: str, client, model: str, request_config: dict = None, request_id: str = None) -> str:
+    self_consistency = AdvancedSelfConsistency(client, model, request_config=request_config, request_id=request_id)
     result = self_consistency.evaluate(system_prompt, initial_query)
     
     logger.info("Advanced Self-Consistency Results:")

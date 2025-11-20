@@ -6,12 +6,17 @@ from optillm import conversation_logger
 logger = logging.getLogger(__name__)
 
 class PlanSearch:
-    def __init__(self, system_prompt: str, client, model: str, request_id: str = None):
+    def __init__(self, system_prompt: str, client, model: str, request_config: dict = None, request_id: str = None):
         self.system_prompt = system_prompt
         self.client = client
         self.model = model
         self.request_id = request_id
         self.plansearch_completion_tokens = 0
+
+        # Extract max_tokens from request_config with default
+        self.max_tokens = 4096
+        if request_config:
+            self.max_tokens = request_config.get('max_tokens', self.max_tokens)
 
     def generate_observations(self, problem: str, num_observations: int = 3) -> List[str]:
         prompt = f"""You are an expert Python programmer. You will be given a competitive programming question
@@ -27,7 +32,7 @@ Please provide {num_observations} observations."""
         # Prepare request for logging
         provider_request = {
             "model": self.model,
-            "max_tokens": 4096,
+            "max_tokens": self.max_tokens,
             "messages": [
                 {"role": "system", "content": self.system_prompt},
                 {"role": "user", "content": prompt}
@@ -71,7 +76,7 @@ Please provide {num_new_observations} new observations derived from the existing
         # Prepare request for logging
         provider_request = {
             "model": self.model,
-            "max_tokens": 4096,
+            "max_tokens": self.max_tokens,
             "messages": [
                 {"role": "system", "content": self.system_prompt},
                 {"role": "user", "content": prompt}
@@ -113,7 +118,7 @@ IS CRUCIAL."""
         # Prepare request for logging
         provider_request = {
             "model": self.model,
-            "max_tokens": 4096,
+            "max_tokens": self.max_tokens,
             "messages": [
                 {"role": "system", "content": self.system_prompt},
                 {"role": "user", "content": prompt}
@@ -155,7 +160,7 @@ Please implement the solution in Python."""
         # Prepare request for logging
         provider_request = {
             "model": self.model,
-            "max_tokens": 4096,
+            "max_tokens": self.max_tokens,
             "messages": [
                 {"role": "system", "content": self.system_prompt},
                 {"role": "user", "content": prompt}
@@ -204,6 +209,6 @@ Please implement the solution in Python."""
             solutions.append(python_implementation)
         return solutions
 
-def plansearch(system_prompt: str, initial_query: str, client, model: str, n: int = 1, request_id: str = None) -> List[str]:
-    planner = PlanSearch(system_prompt, client, model, request_id)
+def plansearch(system_prompt: str, initial_query: str, client, model: str, n: int = 1, request_config: dict = None, request_id: str = None) -> List[str]:
+    planner = PlanSearch(system_prompt, client, model, request_config=request_config, request_id=request_id)
     return planner.solve_multiple(initial_query, n), planner.plansearch_completion_tokens
