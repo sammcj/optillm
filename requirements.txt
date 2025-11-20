@@ -10,6 +10,7 @@ azure.identity
 tiktoken
 scikit-learn
 litellm
+google-cloud-aiplatform
 requests
 beautifulsoup4
 lxml

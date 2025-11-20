@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "optillm"
-version = "0.3.7"
+version = "0.3.8"
 description = "An optimizing inference proxy for LLMs."
 readme = "README.md"
 license = "Apache-2.0"
@@ -29,6 +29,7 @@ dependencies = [
     "tiktoken",
     "scikit-learn",
     "litellm",
+    "google-cloud-aiplatform",
     "requests",
     "beautifulsoup4",
     "lxml",
