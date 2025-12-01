@@ -517,39 +517,29 @@ def extract_search_queries(text: str) -> List[str]:
                 queries.append(cleaned)
     
     # If no explicit patterns, use the text as a search query
+    # Since the user explicitly invoked the web_search plugin, we should always search
     if not queries:
         # Check if this is a search command with empty query (e.g., "search for" with nothing after)
         search_prefixes = ["search for", "find information about", "look up", "research"]
         text_lower = text.lower().strip()
-        
+
         # Don't use fallback if it's just a search prefix with nothing meaningful after
         is_empty_search = any(
-            text_lower.startswith(prefix) and 
+            text_lower.startswith(prefix) and
             len(text_lower.replace(prefix, "").strip().strip('"\'')) < 2
             for prefix in search_prefixes
         )
-        
-        if not is_empty_search:
-            # Remove question marks and clean up
-            cleaned_query = text.replace("?", "").strip()
-            # Remove quotes from the query
-            cleaned_query = cleaned_query.strip('"\'')
-            
-            # If it looks like a question or search query, use it
-            if cleaned_query and len(cleaned_query.split()) > 2:
+
+        if not is_empty_search and text.strip():
+            # User explicitly invoked web_search plugin - send the full query
+            cleaned_query = text.strip()
+
+            # Just basic cleanup: normalize whitespace (replace newlines with spaces)
+            cleaned_query = ' '.join(cleaned_query.split())
+
+            # Final validation - must have some meaningful content
+            if cleaned_query and len(cleaned_query) >= 3:
                 queries.append(cleaned_query)
-            else:
-                # Clean up the text to make it search-friendly
-                cleaned_query = re.sub(r'[^\w\s\.]', ' ', text)  # Keep periods for version numbers
-                cleaned_query = ' '.join(cleaned_query.split())
-                # Remove quotes after regex cleaning
-                cleaned_query = cleaned_query.strip('"\'')
-                
-                if len(cleaned_query) > 100:
-                    # Take first 100 characters
-                    cleaned_query = cleaned_query[:100].rsplit(' ', 1)[0]
-                if cleaned_query and len(cleaned_query) > 2:  # Ensure minimum length
-                    queries.append(cleaned_query)
     
     return queries
 
