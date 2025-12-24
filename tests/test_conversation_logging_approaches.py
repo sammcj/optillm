@@ -16,7 +16,7 @@ from pathlib import Path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import optillm
-from optillm.conversation_logger import ConversationLogger
+from optillm.conversation_logger import ConversationLogger, set_global_logger
 
 # Import all approaches we've modified
 from optillm.bon import best_of_n_sampling

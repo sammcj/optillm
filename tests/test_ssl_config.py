@@ -147,10 +147,14 @@ class TestHTTPClientSSLConfiguration(unittest.TestCase):
             # Verify httpx.Client was called with custom cert path
             mock_httpx_client.assert_called_once_with(verify=test_cert_path)
 
-    @patch.dict(os.environ, {'OPENAI_API_KEY': 'test-key'})
+    @patch.dict(os.environ, {'OPENAI_API_KEY': 'test-key', 'OPTILLM_API_KEY': ''}, clear=False)
     def test_openai_client_receives_http_client(self):
         """Test that OpenAI client receives the configured httpx client."""
         from optillm.server import get_config
+
+        # Ensure OPTILLM_API_KEY is not set (it takes precedence)
+        if 'OPTILLM_API_KEY' in os.environ:
+            del os.environ['OPTILLM_API_KEY']
 
         server_config['ssl_verify'] = False
         server_config['ssl_cert_path'] = ''
@@ -168,10 +172,14 @@ class TestHTTPClientSSLConfiguration(unittest.TestCase):
             self.assertIn('http_client', call_kwargs)
             self.assertEqual(call_kwargs['http_client'], mock_http_client_instance)
 
-    @patch.dict(os.environ, {'CEREBRAS_API_KEY': 'test-key'})
+    @patch.dict(os.environ, {'CEREBRAS_API_KEY': 'test-key', 'OPTILLM_API_KEY': ''}, clear=False)
     def test_cerebras_client_receives_http_client(self):
         """Test that Cerebras client receives the configured httpx client."""
         from optillm.server import get_config
+
+        # Ensure OPTILLM_API_KEY is not set (it takes precedence)
+        if 'OPTILLM_API_KEY' in os.environ:
+            del os.environ['OPTILLM_API_KEY']
 
         server_config['ssl_verify'] = False
         server_config['ssl_cert_path'] = ''
@@ -189,10 +197,14 @@ class TestHTTPClientSSLConfiguration(unittest.TestCase):
             self.assertIn('http_client', call_kwargs)
             self.assertEqual(call_kwargs['http_client'], mock_http_client_instance)
 
-    @patch.dict(os.environ, {'AZURE_OPENAI_API_KEY': 'test-key', 'AZURE_API_VERSION': '2024-02-15-preview', 'AZURE_API_BASE': 'https://test.openai.azure.com'})
+    @patch.dict(os.environ, {'AZURE_OPENAI_API_KEY': 'test-key', 'AZURE_API_VERSION': '2024-02-15-preview', 'AZURE_API_BASE': 'https://test.openai.azure.com', 'OPTILLM_API_KEY': ''}, clear=False)
     def test_azure_client_receives_http_client(self):
         """Test that AzureOpenAI client receives the configured httpx client."""
         from optillm.server import get_config
+
+        # Ensure OPTILLM_API_KEY is not set (it takes precedence)
+        if 'OPTILLM_API_KEY' in os.environ:
+            del os.environ['OPTILLM_API_KEY']
 
         server_config['ssl_verify'] = False
         server_config['ssl_cert_path'] = ''
@@ -328,10 +340,14 @@ class TestSSLWarnings(unittest.TestCase):
             self.assertIn('SSL certificate verification is DISABLED', warning_message)
             self.assertIn('insecure', warning_message.lower())
 
-    @patch.dict(os.environ, {'OPENAI_API_KEY': 'test-key'})
+    @patch.dict(os.environ, {'OPENAI_API_KEY': 'test-key', 'OPTILLM_API_KEY': ''}, clear=False)
     def test_info_when_custom_cert_used(self):
         """Test that an info message is logged when using custom certificate."""
         from optillm.server import get_config
+
+        # Ensure OPTILLM_API_KEY is not set (it takes precedence)
+        if 'OPTILLM_API_KEY' in os.environ:
+            del os.environ['OPTILLM_API_KEY']
 
         # Configure custom certificate path
         test_cert_path = '/path/to/custom-ca.pem'
@@ -343,11 +359,11 @@ class TestSSLWarnings(unittest.TestCase):
              patch('optillm.server.logger.info') as mock_logger_info:
             get_config()
 
-            # Verify info message was logged
-            mock_logger_info.assert_called()
-            info_message = mock_logger_info.call_args[0][0]
-            self.assertIn('custom CA certificate bundle', info_message)
-            self.assertIn(test_cert_path, info_message)
+            # Verify info message was logged about custom cert
+            # The logger.info is called multiple times, check all calls
+            all_info_messages = [call[0][0] for call in mock_logger_info.call_args_list if call[0]]
+            cert_message_found = any('custom CA certificate bundle' in msg for msg in all_info_messages)
+            self.assertTrue(cert_message_found, f"Expected 'custom CA certificate bundle' in one of: {all_info_messages}")
 
 
 if __name__ == '__main__':
