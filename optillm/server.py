@@ -397,9 +397,9 @@ def execute_single_approach(approach, system_prompt, initial_query, client, mode
         if approach == 'none':
             # Use the request_config that was already prepared and passed to this function
             kwargs = request_config.copy() if request_config else {}
-            
+
             # Remove items that are handled separately by the framework
-            kwargs.pop('n', None)  # n is handled by execute_n_times
+            # Note: 'n' is NOT removed - the none_approach passes it to the client which handles multiple completions
             kwargs.pop('stream', None)  # stream is handled by proxy()
             
             # Reconstruct original messages from system_prompt and initial_query
@@ -547,17 +547,29 @@ def execute_n_times(n: int, approaches, operation: str, system_prompt: str, init
     return responses, total_tokens
 
 def generate_streaming_response(final_response, model):
-    # Yield the final response
+    # Generate a unique response ID
+    response_id = f"chatcmpl-{int(time.time()*1000)}"
+    created = int(time.time())
+
+    # Yield the final response with OpenAI-compatible format
     if isinstance(final_response, list):
         for index, response in enumerate(final_response):
+            # First chunk includes role
             yield "data: " + json.dumps({
-                "choices": [{"delta": {"content": response}, "index": index, "finish_reason": "stop"}],
+                "id": response_id,
+                "object": "chat.completion.chunk",
+                "created": created,
                 "model": model,
+                "choices": [{"delta": {"role": "assistant", "content": response}, "index": index, "finish_reason": "stop"}],
             }) + "\n\n"
     else:
+        # First chunk includes role
         yield "data: " + json.dumps({
-            "choices": [{"delta": {"content": final_response}, "index": 0, "finish_reason": "stop"}],
+            "id": response_id,
+            "object": "chat.completion.chunk",
+            "created": created,
             "model": model,
+            "choices": [{"delta": {"role": "assistant", "content": final_response}, "index": 0, "finish_reason": "stop"}],
         }) + "\n\n"
 
     # Yield the final message to indicate the stream has ended
