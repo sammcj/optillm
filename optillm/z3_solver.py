@@ -15,8 +15,16 @@ from optillm import conversation_logger
 class TimeoutException(Exception):
     pass
 
-def prepare_safe_globals():
-    safe_globals = {
+def prepare_execution_globals():
+    """
+    Prepare globals dictionary for Z3/SymPy code execution.
+
+    WARNING: This is NOT a security sandbox. The name "execution_globals" reflects
+    that this simply provides the execution environment for solver code, not a
+    security boundary. The code is executed via exec() with access to z3, sympy,
+    and math libraries. Only execute trusted code.
+    """
+    execution_globals = {
         'print': print,
         '__builtins__': {
             'True': True,
@@ -35,7 +43,7 @@ def prepare_safe_globals():
     }
     
     # Add common math functions
-    safe_globals.update({
+    execution_globals.update({
         'log': math.log,
         'log2': math.log2,
         'sqrt': math.sqrt,
@@ -48,10 +56,10 @@ def prepare_safe_globals():
     })
 
     # Add complex number support
-    safe_globals['I'] = complex(0, 1)
-    safe_globals['Complex'] = complex
+    execution_globals['I'] = complex(0, 1)
+    execution_globals['Complex'] = complex
 
-    return safe_globals
+    return execution_globals
 
 def execute_code_in_process(code: str):
     import z3
@@ -60,18 +68,18 @@ def execute_code_in_process(code: str):
     import itertools
     from fractions import Fraction
 
-    safe_globals = prepare_safe_globals()
-    
+    execution_globals = prepare_execution_globals()
+
     # Add Z3 specific functions
     z3_whitelist = set(dir(z3))
-    safe_globals.update({name: getattr(z3, name) for name in z3_whitelist})
+    execution_globals.update({name: getattr(z3, name) for name in z3_whitelist})
 
     # Add SymPy specific functions
     sympy_whitelist = set(dir(sympy))
-    safe_globals.update({name: getattr(sympy, name) for name in sympy_whitelist})
+    execution_globals.update({name: getattr(sympy, name) for name in sympy_whitelist})
 
     # Ensure key Z3 and SymPy components are available
-    safe_globals.update({
+    execution_globals.update({
         'z3': z3,
         'sympy': sympy,
         'Solver': z3.Solver,
@@ -112,22 +120,22 @@ def execute_code_in_process(code: str):
                 return x.approx(20)
         return float(x)
 
-    safe_globals['as_numerical'] = as_numerical
+    execution_globals['as_numerical'] = as_numerical
 
     def Mod(x, y):
         return x % y
 
-    safe_globals['Mod'] = Mod
+    execution_globals['Mod'] = Mod
 
     def Rational(numerator, denominator=1):
         return z3.Real(str(Fraction(numerator, denominator)))
 
-    safe_globals['Rational'] = Rational
+    execution_globals['Rational'] = Rational
 
     output_buffer = io.StringIO()
     with contextlib.redirect_stdout(output_buffer):
         try:
-            exec(code, safe_globals, {})
+            exec(code, execution_globals, {})
         except Exception:
             return ("error", traceback.format_exc())
     return ("success", output_buffer.getvalue())
