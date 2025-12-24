@@ -68,16 +68,16 @@ class TestConversationLoggingWithServer(unittest.TestCase):
     def _check_existing_server():
         """Check if OptILLM server is already running"""
         try:
-            response = requests.get("http://localhost:8000/v1/health", timeout=2)
+            response = requests.get("http://localhost:8000/health", timeout=2)
             return response.status_code == 200
         except requests.exceptions.RequestException:
             return False
-    
+
     @staticmethod
     def _check_server_health():
         """Check if server is healthy"""
         try:
-            response = requests.get("http://localhost:8000/v1/health", timeout=5)
+            response = requests.get("http://localhost:8000/health", timeout=5)
             return response.status_code == 200
         except requests.exceptions.RequestException:
             return False
@@ -515,7 +515,10 @@ class TestConversationLoggingPerformanceWithServer(unittest.TestCase):
     
     def setUp(self):
         """Check server availability"""
-        if not requests.get("http://localhost:8000/v1/health", timeout=2).status_code == 200:
+        try:
+            if requests.get("http://localhost:8000/health", timeout=2).status_code != 200:
+                self.skipTest("OptILLM server not available")
+        except requests.exceptions.RequestException:
             self.skipTest("OptILLM server not available")
         
         self.client = OpenAI(api_key="optillm", base_url="http://localhost:8000/v1")

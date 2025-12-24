@@ -107,6 +107,23 @@ jobs:
         OPTILLM_API_KEY=optillm python tests/test_n_parameter.py
         OPTILLM_API_KEY=optillm python -m pytest tests/test_api_compatibility.py -v --tb=short || echo "API compatibility tests require pytest"
         OPTILLM_API_KEY=optillm python tests/test.py --approaches none --single-test "Simple Math Problem" || echo "Main test completed"
+
+        # Run SSL config tests (no server needed but requires proper env setup)
+        echo "Running SSL config tests..."
+        python -m pytest tests/test_ssl_config.py -v --tb=short
+
+        # Run MARS tests
+        echo "Running MARS parallel tests..."
+        OPTILLM_API_KEY=optillm python -m pytest tests/test_mars_parallel.py -v --tb=short
+
+        # Run deepconf tests
+        echo "Running deepconf tests..."
+        OPTILLM_API_KEY=optillm python -m pytest tests/test_deepconf.py -v --tb=short
+
+        # Run conversation logger unit tests (no server needed)
+        echo "Running conversation logger tests..."
+        python -m pytest tests/test_conversation_logger.py -v --tb=short
+
         echo "All integration tests completed successfully!"
         exit 0
       env:
