@@ -94,10 +94,10 @@ def get_config():
         API_KEY = os.environ.get("OPENAI_API_KEY")
         base_url = server_config['base_url']
         if base_url != "":
-            default_client = OpenAI(api_key=API_KEY, base_url=base_url)
+            default_client = OpenAI(api_key=API_KEY, base_url=base_url, http_client=http_client)
             logger.info(f"Created OpenAI client with base_url: {base_url}")
         else:
-            default_client = OpenAI(api_key=API_KEY)
+            default_client = OpenAI(api_key=API_KEY, http_client=http_client)
             logger.info("Created OpenAI client without base_url")
     elif os.environ.get("AZURE_OPENAI_API_KEY"):
         API_KEY = os.environ.get("AZURE_OPENAI_API_KEY")

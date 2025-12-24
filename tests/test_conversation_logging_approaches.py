@@ -91,24 +91,25 @@ class TestConversationLoggingApproaches(unittest.TestCase):
         self.temp_dir = tempfile.mkdtemp()
         self.log_dir = Path(self.temp_dir) / "conversations"
         self.logger = ConversationLogger(self.log_dir, enabled=True)
-        
-        # Mock optillm.conversation_logger
-        optillm.conversation_logger = self.logger
-        
+
+        # Set the global logger instance for approach modules to use
+        set_global_logger(self.logger)
+
         # Common test parameters
         self.system_prompt = "You are a helpful assistant."
         self.initial_query = "What is 2 + 2?"
         self.model = "test-model"
         self.request_id = "test-request-123"
-        
+
         # Create mock client
         self.client = MockOpenAIClient()
-    
+
     def tearDown(self):
         """Clean up test environment"""
         import shutil
         shutil.rmtree(self.temp_dir, ignore_errors=True)
-        optillm.conversation_logger = None
+        # Clear the global logger
+        set_global_logger(None)
     
     def test_multi_call_approaches_logging(self):
         """Test BON, MCTS, and RTO approaches log API calls correctly"""
