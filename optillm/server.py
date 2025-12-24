@@ -189,6 +189,7 @@ server_config = {
     'base_url': '',
     'optillm_api_key': '',
     'return_full_response': False,
+    'host': '127.0.0.1',  # Default to localhost for security; use 0.0.0.0 to allow external connections
     'port': 8000,
     'log': 'info',
     'ssl_verify': True,
@@ -1264,7 +1265,8 @@ def main():
             import gradio as gr
             # Start server in a separate thread
             import threading
-            server_thread = threading.Thread(target=app.run, kwargs={'host': '0.0.0.0', 'port': port})
+            host = server_config['host']
+            server_thread = threading.Thread(target=app.run, kwargs={'host': host, 'port': port})
             server_thread.daemon = True
             server_thread.start()
             
@@ -1311,12 +1313,12 @@ def main():
                 description=f"Connected to OptILLM proxy at {base_url}"
             )
             demo.queue()  # Enable queue to handle long operations properly
-            demo.launch(server_name="0.0.0.0", share=False)
+            demo.launch(server_name=host, share=False)
         except ImportError:
             logger.error("Gradio is required for GUI. Install it with: pip install gradio")
             return
         
-    app.run(host='0.0.0.0', port=port)
+    app.run(host=server_config['host'], port=port)
 
 if __name__ == "__main__":
     main()

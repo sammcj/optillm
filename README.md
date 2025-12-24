@@ -216,15 +216,15 @@ You can then run the optillm proxy as follows.
 ```bash
 python optillm.py
 2024-09-06 07:57:14,191 - INFO - Starting server with approach: auto
-2024-09-06 07:57:14,191 - INFO - Server configuration: {'approach': 'auto', 'mcts_simulations': 2, 'mcts_exploration': 0.2, 'mcts_depth': 1, 'best_of_n': 3, 'model': 'gpt-4o-mini', 'rstar_max_depth': 3, 'rstar_num_rollouts': 5, 'rstar_c': 1.4, 'base_url': ''}
+2024-09-06 07:57:14,191 - INFO - Server configuration: {'approach': 'auto', 'mcts_simulations': 2, 'mcts_exploration': 0.2, 'mcts_depth': 1, 'best_of_n': 3, 'model': 'gpt-4o-mini', 'rstar_max_depth': 3, 'rstar_num_rollouts': 5, 'rstar_c': 1.4, 'base_url': '', 'host': '127.0.0.1'}
  * Serving Flask app 'optillm'
  * Debug mode: off
 2024-09-06 07:57:14,212 - INFO - WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
- * Running on all addresses (0.0.0.0)
  * Running on http://127.0.0.1:8000
- * Running on http://192.168.10.48:8000
 2024-09-06 07:57:14,212 - INFO - Press CTRL+C to quit
 ```
+
+> **Security Note**: By default, optillm binds to `127.0.0.1` (localhost only) for security. To allow external connections (e.g., for Docker or remote access), use `--host 0.0.0.0`. Only do this on trusted networks or with proper authentication configured via `--optillm-api-key`.
 ## Usage
 
 Once the proxy is running, you can use it as a drop in replacement for an OpenAI client by setting the `base_url` as `http://localhost:8000/v1`.
