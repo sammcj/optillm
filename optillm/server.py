@@ -409,6 +409,7 @@ def execute_single_approach(approach, system_prompt, initial_query, client, mode
             if initial_query:
                 messages.append({"role": "user", "content": initial_query})
             
+            logger.debug(f"none_approach kwargs: {kwargs}")
             response = none_approach(original_messages=messages, client=client, model=model, request_id=request_id, **kwargs)
             # For none approach, we return the response and a token count of 0
             # since the full token count is already in the response
