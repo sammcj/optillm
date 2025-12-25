@@ -231,20 +231,22 @@ def test_proxy_plugin_timeout_config():
         config_path = f.name
     
     try:
-        # Load config and verify timeout settings
-        loaded_config = ProxyConfig.load(config_path)
-        
+        # Load config with force_reload to bypass any cached config
+        loaded_config = ProxyConfig.load(config_path, force_reload=True)
+
         assert 'timeouts' in loaded_config, "Config should contain timeouts section"
         assert loaded_config['timeouts'].get('request') == 10, "Request timeout should be 10"
         assert loaded_config['timeouts'].get('connect') == 3, "Connect timeout should be 3"
-        
+
         assert 'queue' in loaded_config, "Config should contain queue section"
         assert loaded_config['queue']['max_concurrent'] == 50, "Max concurrent should be 50"
         assert loaded_config['queue']['timeout'] == 30, "Queue timeout should be 30"
-        
+
     finally:
         import os
         os.unlink(config_path)
+        # Clear the cache to avoid affecting other tests
+        ProxyConfig._cached_config = None
 
 
 def test_proxy_plugin_timeout_handling():

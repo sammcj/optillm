@@ -107,6 +107,23 @@ jobs:
         OPTILLM_API_KEY=optillm python tests/test_n_parameter.py
         OPTILLM_API_KEY=optillm python -m pytest tests/test_api_compatibility.py -v --tb=short || echo "API compatibility tests require pytest"
         OPTILLM_API_KEY=optillm python tests/test.py --approaches none --single-test "Simple Math Problem" || echo "Main test completed"
+
+        # Run SSL config tests (no server needed but requires proper env setup)
+        echo "Running SSL config tests..."
+        python -m pytest tests/test_ssl_config.py -v --tb=short
+
+        # Run MARS tests
+        echo "Running MARS parallel tests..."
+        OPTILLM_API_KEY=optillm python -m pytest tests/test_mars_parallel.py -v --tb=short
+
+        # Run deepconf tests
+        echo "Running deepconf tests..."
+        OPTILLM_API_KEY=optillm python -m pytest tests/test_deepconf.py -v --tb=short
+
+        # Run conversation logger unit tests (no server needed)
+        echo "Running conversation logger tests..."
+        python -m pytest tests/test_conversation_logger.py -v --tb=short
+
         echo "All integration tests completed successfully!"
         exit 0
       env:
@@ -126,3 +143,127 @@ jobs:
         sleep 2
         echo "Server shutdown completed"
         exit 0
+
+  conversation-logging-tests:
+    runs-on: ubuntu-latest
+    needs: unit-tests
+    strategy:
+      matrix:
+        python-version: ['3.12']
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Cache pip packages
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r tests/requirements.txt
+        pip install -e .
+
+    - name: Start optillm server with conversation logging
+      run: |
+        echo "Starting optillm server with conversation logging..."
+        mkdir -p /tmp/optillm_conversations
+        OPTILLM_API_KEY=optillm python optillm.py \
+          --model google/gemma-3-270m-it \
+          --port 8000 \
+          --log-conversations \
+          --conversation-log-dir /tmp/optillm_conversations &
+        echo $! > server.pid
+
+        # Wait for server to be ready
+        echo "Waiting for server to start..."
+        sleep 20
+
+        # Test server health
+        curl -s http://localhost:8000/health || echo "Server health check failed"
+      env:
+        OPTILLM_API_KEY: optillm
+        HF_TOKEN: ${{ secrets.HF_TOKEN }}
+
+    - name: Run conversation logging tests
+      run: |
+        echo "Running conversation logging approach tests..."
+        OPTILLM_API_KEY=optillm python -m pytest tests/test_conversation_logging_approaches.py -v --tb=short
+
+        echo "Running conversation logging server tests..."
+        OPTILLM_API_KEY=optillm OPTILLM_CONVERSATION_LOG_DIR=/tmp/optillm_conversations python -m pytest tests/test_conversation_logging_server.py -v --tb=short
+
+        echo "All conversation logging tests completed successfully!"
+      env:
+        OPTILLM_API_KEY: optillm
+        OPTILLM_CONVERSATION_LOG_DIR: /tmp/optillm_conversations
+        HF_TOKEN: ${{ secrets.HF_TOKEN }}
+
+    - name: Stop optillm server
+      if: always()
+      run: |
+        echo "Stopping optillm server..."
+        if [ -f server.pid ]; then
+          kill $(cat server.pid) 2>/dev/null || true
+          rm -f server.pid
+        fi
+        pkill -f "python.*optillm" 2>/dev/null || true
+        sleep 2
+        echo "Server shutdown completed"
+        exit 0
+
+  mcp-tests:
+    runs-on: ubuntu-latest
+    needs: unit-tests
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'  # Only run on main branch pushes (secrets available)
+    strategy:
+      matrix:
+        python-version: ['3.12']
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - name: Cache pip packages
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r tests/requirements.txt
+        pip install -e .
+
+    - name: Run MCP plugin tests
+      run: |
+        echo "Running MCP plugin tests..."
+        python -m pytest tests/test_mcp_plugin.py -v --tb=short
+        echo "MCP tests completed successfully!"
+      env:
+        OPTILLM_API_KEY: optillm
+        GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+        HF_TOKEN: ${{ secrets.HF_TOKEN }}

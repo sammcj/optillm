@@ -94,10 +94,10 @@ def get_config():
         API_KEY = os.environ.get("OPENAI_API_KEY")
         base_url = server_config['base_url']
         if base_url != "":
-            default_client = OpenAI(api_key=API_KEY, base_url=base_url)
+            default_client = OpenAI(api_key=API_KEY, base_url=base_url, http_client=http_client)
             logger.info(f"Created OpenAI client with base_url: {base_url}")
         else:
-            default_client = OpenAI(api_key=API_KEY)
+            default_client = OpenAI(api_key=API_KEY, http_client=http_client)
             logger.info("Created OpenAI client without base_url")
     elif os.environ.get("AZURE_OPENAI_API_KEY"):
         API_KEY = os.environ.get("AZURE_OPENAI_API_KEY")
@@ -189,6 +189,7 @@ server_config = {
     'base_url': '',
     'optillm_api_key': '',
     'return_full_response': False,
+    'host': '127.0.0.1',  # Default to localhost for security; use 0.0.0.0 to allow external connections
     'port': 8000,
     'log': 'info',
     'ssl_verify': True,
@@ -396,9 +397,9 @@ def execute_single_approach(approach, system_prompt, initial_query, client, mode
         if approach == 'none':
             # Use the request_config that was already prepared and passed to this function
             kwargs = request_config.copy() if request_config else {}
-            
+
             # Remove items that are handled separately by the framework
-            kwargs.pop('n', None)  # n is handled by execute_n_times
+            # Note: 'n' is NOT removed - the none_approach passes it to the client which handles multiple completions
             kwargs.pop('stream', None)  # stream is handled by proxy()
             
             # Reconstruct original messages from system_prompt and initial_query
@@ -408,6 +409,7 @@ def execute_single_approach(approach, system_prompt, initial_query, client, mode
             if initial_query:
                 messages.append({"role": "user", "content": initial_query})
             
+            logger.debug(f"none_approach kwargs: {kwargs}")
             response = none_approach(original_messages=messages, client=client, model=model, request_id=request_id, **kwargs)
             # For none approach, we return the response and a token count of 0
             # since the full token count is already in the response
@@ -546,17 +548,29 @@ def execute_n_times(n: int, approaches, operation: str, system_prompt: str, init
     return responses, total_tokens
 
 def generate_streaming_response(final_response, model):
-    # Yield the final response
+    # Generate a unique response ID
+    response_id = f"chatcmpl-{int(time.time()*1000)}"
+    created = int(time.time())
+
+    # Yield the final response with OpenAI-compatible format
     if isinstance(final_response, list):
         for index, response in enumerate(final_response):
+            # First chunk includes role
             yield "data: " + json.dumps({
-                "choices": [{"delta": {"content": response}, "index": index, "finish_reason": "stop"}],
+                "id": response_id,
+                "object": "chat.completion.chunk",
+                "created": created,
                 "model": model,
+                "choices": [{"delta": {"role": "assistant", "content": response}, "index": index, "finish_reason": "stop"}],
             }) + "\n\n"
     else:
+        # First chunk includes role
         yield "data: " + json.dumps({
-            "choices": [{"delta": {"content": final_response}, "index": 0, "finish_reason": "stop"}],
+            "id": response_id,
+            "object": "chat.completion.chunk",
+            "created": created,
             "model": model,
+            "choices": [{"delta": {"role": "assistant", "content": final_response}, "index": 0, "finish_reason": "stop"}],
         }) + "\n\n"
 
     # Yield the final message to indicate the stream has ended
@@ -987,6 +1001,7 @@ def parse_args():
         ("--rstar-c", "OPTILLM_RSTAR_C", float, 1.4, "Exploration constant for rStar algorithm"),
         ("--n", "OPTILLM_N", int, 1, "Number of final responses to be returned"),
         ("--return-full-response", "OPTILLM_RETURN_FULL_RESPONSE", bool, False, "Return the full response including the CoT with <thinking> tags"),
+        ("--host", "OPTILLM_HOST", str, "127.0.0.1", "Host address to bind the server to (use 0.0.0.0 to allow external connections)"),
         ("--port", "OPTILLM_PORT", int, 8000, "Specify the port to run the proxy"),
         ("--log", "OPTILLM_LOG", str, "info", "Specify the logging level", list(logging_levels.keys())),
         ("--launch-gui", "OPTILLM_LAUNCH_GUI", bool, False, "Launch a Gradio chat interface"),
@@ -1263,7 +1278,8 @@ def main():
             import gradio as gr
             # Start server in a separate thread
             import threading
-            server_thread = threading.Thread(target=app.run, kwargs={'host': '0.0.0.0', 'port': port})
+            host = server_config['host']
+            server_thread = threading.Thread(target=app.run, kwargs={'host': host, 'port': port})
             server_thread.daemon = True
             server_thread.start()
             
@@ -1310,12 +1326,12 @@ def main():
                 description=f"Connected to OptILLM proxy at {base_url}"
             )
             demo.queue()  # Enable queue to handle long operations properly
-            demo.launch(server_name="0.0.0.0", share=False)
+            demo.launch(server_name=host, share=False)
         except ImportError:
             logger.error("Gradio is required for GUI. Install it with: pip install gradio")
             return
         
-    app.run(host='0.0.0.0', port=port)
+    app.run(host=server_config['host'], port=port)
 
 if __name__ == "__main__":
     main()

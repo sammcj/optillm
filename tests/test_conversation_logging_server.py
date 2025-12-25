@@ -15,8 +15,13 @@ import subprocess
 from pathlib import Path
 from openai import OpenAI
 
-# Add parent directory to path for imports
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# Add parent directory and tests directory to path for imports
+_tests_dir = os.path.dirname(os.path.abspath(__file__))
+_project_dir = os.path.dirname(_tests_dir)
+if _tests_dir not in sys.path:
+    sys.path.insert(0, _tests_dir)
+if _project_dir not in sys.path:
+    sys.path.insert(0, _project_dir)
 
 from test_utils import TEST_MODEL, setup_test_env, start_test_server, stop_test_server
 
@@ -68,16 +73,16 @@ class TestConversationLoggingWithServer(unittest.TestCase):
     def _check_existing_server():
         """Check if OptILLM server is already running"""
         try:
-            response = requests.get("http://localhost:8000/v1/health", timeout=2)
+            response = requests.get("http://localhost:8000/health", timeout=2)
             return response.status_code == 200
         except requests.exceptions.RequestException:
             return False
-    
+
     @staticmethod
     def _check_server_health():
         """Check if server is healthy"""
         try:
-            response = requests.get("http://localhost:8000/v1/health", timeout=5)
+            response = requests.get("http://localhost:8000/health", timeout=5)
             return response.status_code == 200
         except requests.exceptions.RequestException:
             return False
@@ -89,30 +94,38 @@ class TestConversationLoggingWithServer(unittest.TestCase):
         env["OPTILLM_API_KEY"] = "optillm"
         env["OPTILLM_LOG_CONVERSATIONS"] = "true"
         env["OPTILLM_CONVERSATION_LOG_DIR"] = str(cls.temp_log_dir)
-        
+
+        # Get the project root directory (parent of tests directory)
+        project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
         proc = subprocess.Popen([
             sys.executable, "optillm.py",
             "--model", TEST_MODEL,
             "--port", "8000",
             "--log-conversations",
             "--conversation-log-dir", str(cls.temp_log_dir)
-        ], env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        
+        ], env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=project_root)
+
         return proc
     
     def setUp(self):
         """Set up test client"""
         if not self.server_available:
             self.skipTest("OptILLM server not available")
-        
+
         self.client = OpenAI(api_key="optillm", base_url="http://localhost:8000/v1")
-        
-        # Determine log directory - use temp dir if we started server, otherwise default
+
+        # Determine log directory - priority order:
+        # 1. temp_log_dir (if we started the server ourselves)
+        # 2. OPTILLM_CONVERSATION_LOG_DIR environment variable (for CI)
+        # 3. Default ~/.optillm/conversations
         if self.temp_log_dir:
             self.log_dir = self.temp_log_dir
+        elif os.getenv("OPTILLM_CONVERSATION_LOG_DIR"):
+            self.log_dir = Path(os.getenv("OPTILLM_CONVERSATION_LOG_DIR"))
         else:
             self.log_dir = Path.home() / ".optillm" / "conversations"
-        
+
         # Record initial state for comparison
         self.initial_log_files = set(self.log_dir.glob("*.jsonl")) if self.log_dir.exists() else set()
     
@@ -515,7 +528,10 @@ class TestConversationLoggingPerformanceWithServer(unittest.TestCase):
     
     def setUp(self):
         """Check server availability"""
-        if not requests.get("http://localhost:8000/v1/health", timeout=2).status_code == 200:
+        try:
+            if requests.get("http://localhost:8000/health", timeout=2).status_code != 200:
+                self.skipTest("OptILLM server not available")
+        except requests.exceptions.RequestException:
             self.skipTest("OptILLM server not available")
         
         self.client = OpenAI(api_key="optillm", base_url="http://localhost:8000/v1")

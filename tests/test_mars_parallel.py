@@ -42,6 +42,20 @@ class MockOpenAIClient:
 
         call_count = self.call_count  # Capture for closure
 
+        # Check the problem content to provide appropriate mock response
+        messages = kwargs.get('messages', [])
+        problem_text = ' '.join(m.get('content', '') for m in messages if isinstance(m, dict)).lower()
+
+        # Generate response with expected features based on problem type
+        if 'polynomial' in problem_text or 'algebra' in problem_text:
+            content = f'Using systematic analysis and case-by-case examination, solution {call_count}. The answer is 42.'
+        elif 'distribute' in problem_text or 'combinatorics' in problem_text:
+            content = f'Using stars and bars method with constraint analysis, solution {call_count}. The answer is 42.'
+        elif 'triangle' in problem_text or 'geometry' in problem_text:
+            content = f'Applying geometric inequality and area analysis, solution {call_count}. The answer is 42.'
+        else:
+            content = f'Mock mathematical solution {call_count}. The answer is 42.'
+
         class MockUsage:
             def __init__(self, reasoning_tokens):
                 self.completion_tokens_details = type('obj', (), {
@@ -50,17 +64,17 @@ class MockOpenAIClient:
                 self.total_tokens = reasoning_tokens + 100
 
         class MockChoice:
-            def __init__(self):
+            def __init__(self, response_content):
                 self.message = type('obj', (), {
-                    'content': f'Mock mathematical solution {call_count}. The answer is 42.'
+                    'content': response_content
                 })()
 
         class MockResponse:
-            def __init__(self, reasoning_tokens):
-                self.choices = [MockChoice()]
+            def __init__(self, reasoning_tokens, response_content):
+                self.choices = [MockChoice(response_content)]
                 self.usage = MockUsage(reasoning_tokens)
 
-        return MockResponse(self.reasoning_tokens)
+        return MockResponse(self.reasoning_tokens, content)
 
     @property
     def chat(self):
@@ -292,22 +306,24 @@ class TestMARSParallel(unittest.TestCase):
         class EnhancedMockClient(MockOpenAIClient):
             def __init__(self):
                 super().__init__(response_delay=0.1, reasoning_tokens=3000)
+                # Map problem keywords to responses that contain expected features
                 self.problem_responses = {
-                    "Advanced Algebra": "This requires systematic case analysis. Let me examine small values systematically. After checking cases x,y,z < 100, the equation x³ + y³ = z³ - 1 has solutions like (x,y,z) = (1,1,1) since 1³ + 1³ = 2 = 2³ - 6... Actually, let me recalculate: 1³ + 1³ = 2, and z³ - 1 = 2 means z³ = 3, so z ≈ 1.44. Let me check (2,2,2): 8 + 8 = 16 = 8 - 1 = 7? No. This is a difficult Diophantine equation requiring advanced techniques.",
-                    "Number Theory": "I'll prove this by contradiction using Euclid's method. Assume there are only finitely many primes of the form 4k+3: p₁, p₂, ..., pₙ. Consider N = 4(p₁p₂...pₙ) + 3. Since N ≡ 3 (mod 4), at least one prime factor of N must be ≡ 3 (mod 4). But N is not divisible by any of p₁, p₂, ..., pₙ, so there must be another prime of the form 4k+3, contradicting our assumption. Therefore, there are infinitely many such primes.",
-                    "Combinatorics": "This is a stars and bars problem with constraints. We need to distribute 20 balls into 5 boxes with each box having at least 2 balls. First, place 2 balls in each box (using 10 balls). Now we need to distribute the remaining 10 balls into 5 boxes with no constraints. Using stars and bars: C(10+5-1, 5-1) = C(14,4) = 1001 ways.",
-                    "Geometry": "This is a form of Weitzenböck's inequality. We can prove this using the relationship between area and sides. For a triangle with area S and sides a,b,c, we have S = √[s(s-a)(s-b)(s-c)] where s = (a+b+c)/2. We want to show a² + b² + c² ≥ 4√3 · S. This can be proven using the isoperimetric inequality and Jensen's inequality applied to the convex function f(x) = x²."
+                    # Keywords from problem text -> response with expected features
+                    "integer solutions": "This requires systematic case analysis. Let me examine small values systematically. After checking cases x,y,z < 100, the equation x³ + y³ = z³ - 1 has solutions like (x,y,z) = (1,1,1) since 1³ + 1³ = 2 = 2³ - 6... Actually, let me recalculate: 1³ + 1³ = 2, and z³ - 1 = 2 means z³ = 3, so z ≈ 1.44. Let me check (2,2,2): 8 + 8 = 16 = 8 - 1 = 7? No. This is a difficult Diophantine equation requiring advanced techniques.",
+                    "primes": "I'll prove this by contradiction using Euclid's method. Assume there are only finitely many primes of the form 4k+3: p₁, p₂, ..., pₙ. Consider N = 4(p₁p₂...pₙ) + 3. Since N ≡ 3 (mod 4), at least one prime factor of N must be ≡ 3 (mod 4). But N is not divisible by any of p₁, p₂, ..., pₙ, so there must be another prime of the form 4k+3, contradicting our assumption. Therefore, there are infinitely many such primes.",
+                    "distribute": "This is a stars and bars problem with constraints. We need to distribute 20 balls into 5 boxes with each box having at least 2 balls. First, place 2 balls in each box (using 10 balls). Now we need to distribute the remaining 10 balls into 5 boxes with no constraints. Using stars and bars: C(10+5-1, 5-1) = C(14,4) = 1001 ways.",
+                    "triangle": "This is a form of Weitzenböck's inequality. We can prove this using the relationship between area and sides. For a triangle with area S and sides a,b,c, we have S = √[s(s-a)(s-b)(s-c)] where s = (a+b+c)/2. We want to show a² + b² + c² ≥ 4√3 · S. This can be proven using the isoperimetric inequality and Jensen's inequality applied to the convex function f(x) = x²."
                 }
 
             def chat_completions_create(self, **kwargs):
                 result = super().chat_completions_create(**kwargs)
 
-                # Look for problem type in the messages
+                # Look for problem keywords in the messages
                 messages = kwargs.get('messages', [])
                 for message in messages:
-                    content = message.get('content', '')
-                    for prob_type, response in self.problem_responses.items():
-                        if any(keyword in content for keyword in prob_type.lower().split()):
+                    content = message.get('content', '').lower()
+                    for keyword, response in self.problem_responses.items():
+                        if keyword.lower() in content:
                             result.choices[0].message.content = response
                             return result
 

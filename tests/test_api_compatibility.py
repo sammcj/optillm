@@ -80,10 +80,10 @@ def test_extra_body_approach(client):
         messages=[
             {"role": "user", "content": "What is 2+2?"}
         ],
-        extra_body={"optillm_approach": "bon"},
-        max_tokens=10
+        extra_body={"optillm_approach": "re2"},  # Use re2 instead of bon (simpler, avoids role ordering issues with some models)
+        max_tokens=50
     )
-    
+
     assert hasattr(response, 'choices')
     assert len(response.choices) > 0
 
