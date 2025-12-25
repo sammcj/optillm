@@ -15,8 +15,13 @@ import subprocess
 from pathlib import Path
 from openai import OpenAI
 
-# Add parent directory to path for imports
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# Add parent directory and tests directory to path for imports
+_tests_dir = os.path.dirname(os.path.abspath(__file__))
+_project_dir = os.path.dirname(_tests_dir)
+if _tests_dir not in sys.path:
+    sys.path.insert(0, _tests_dir)
+if _project_dir not in sys.path:
+    sys.path.insert(0, _project_dir)
 
 from test_utils import TEST_MODEL, setup_test_env, start_test_server, stop_test_server
 
