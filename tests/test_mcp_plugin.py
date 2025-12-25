@@ -344,18 +344,29 @@ class TestMCPServerManager:
 @pytest.mark.asyncio
 @pytest.mark.skipif(not os.getenv("GITHUB_TOKEN"), reason="GITHUB_TOKEN not set")
 class TestGitHubMCPServer:
-    """Integration tests with GitHub MCP server (requires GITHUB_TOKEN)"""
+    """Integration tests with GitHub MCP server (requires GITHUB_TOKEN)
+
+    Uses the local GitHub MCP server via stdio transport (npx).
+    The remote hosted endpoint at api.githubcopilot.com requires OAuth,
+    but the local server works with a regular GitHub Personal Access Token.
+    """
 
     async def test_github_mcp_server_connection(self):
-        """Test real connection to GitHub MCP server"""
+        """Test real connection to GitHub MCP server via local stdio transport"""
+        import shutil
+
+        # Check if npx is available
+        if not shutil.which("npx"):
+            pytest.skip("npx not available - required for local GitHub MCP server")
+
+        # Use stdio transport with local GitHub MCP server
+        # This uses the official @modelcontextprotocol/server-github package
         config = ServerConfig(
-            transport="sse",
-            url="https://api.githubcopilot.com/mcp",
-            headers={
-                "Authorization": f"Bearer {os.getenv('GITHUB_TOKEN')}",
-                "Accept": "text/event-stream"
-            },
-            description="GitHub MCP Server"
+            transport="stdio",
+            command="npx",
+            args=["-y", "@modelcontextprotocol/server-github"],
+            env={"GITHUB_PERSONAL_ACCESS_TOKEN": os.getenv("GITHUB_TOKEN")},
+            description="GitHub MCP Server (local)"
         )
 
         server = MCPServer("github", config)
@@ -369,14 +380,11 @@ class TestGitHubMCPServer:
                 print(f"GitHub MCP server connected successfully!")
                 print(f"Found: {len(server.tools)} tools, {len(server.resources)} resources, {len(server.prompts)} prompts")
 
-                # Test a simple tool if available
+                # List some tools
                 if server.tools:
-                    tool_name = server.tools[0].name
-                    print(f"Testing tool: {tool_name}")
-
-                    # Create minimal arguments - this might fail but tests the connection
-                    result = await execute_tool_sse(config, tool_name, {})
-                    print(f"Tool execution result: {result}")
+                    print("Available tools:")
+                    for tool in server.tools[:5]:
+                        print(f"  - {tool.name}")
             else:
                 pytest.skip("Could not connect to GitHub MCP server")
 
