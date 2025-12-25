@@ -42,17 +42,20 @@ def start_test_server(model: str = TEST_MODEL, port: int = 8000) -> subprocess.P
     # Set environment for local inference
     env = os.environ.copy()
     env["OPTILLM_API_KEY"] = "optillm"
-    
-    # Start server
+
+    # Get the project root directory (parent of tests directory)
+    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+    # Start server from project root where optillm.py is located
     proc = subprocess.Popen([
         sys.executable, "optillm.py",
         "--model", model,
         "--port", str(port)
-    ], env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    
+    ], env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=project_root)
+
     # Wait for server to start
     time.sleep(5)
-    
+
     return proc
 
 def stop_test_server(proc: subprocess.Popen):

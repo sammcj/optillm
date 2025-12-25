@@ -94,15 +94,18 @@ class TestConversationLoggingWithServer(unittest.TestCase):
         env["OPTILLM_API_KEY"] = "optillm"
         env["OPTILLM_LOG_CONVERSATIONS"] = "true"
         env["OPTILLM_CONVERSATION_LOG_DIR"] = str(cls.temp_log_dir)
-        
+
+        # Get the project root directory (parent of tests directory)
+        project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
         proc = subprocess.Popen([
             sys.executable, "optillm.py",
             "--model", TEST_MODEL,
             "--port", "8000",
             "--log-conversations",
             "--conversation-log-dir", str(cls.temp_log_dir)
-        ], env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        
+        ], env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=project_root)
+
         return proc
     
     def setUp(self):
