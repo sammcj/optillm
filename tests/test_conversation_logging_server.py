@@ -112,15 +112,20 @@ class TestConversationLoggingWithServer(unittest.TestCase):
         """Set up test client"""
         if not self.server_available:
             self.skipTest("OptILLM server not available")
-        
+
         self.client = OpenAI(api_key="optillm", base_url="http://localhost:8000/v1")
-        
-        # Determine log directory - use temp dir if we started server, otherwise default
+
+        # Determine log directory - priority order:
+        # 1. temp_log_dir (if we started the server ourselves)
+        # 2. OPTILLM_CONVERSATION_LOG_DIR environment variable (for CI)
+        # 3. Default ~/.optillm/conversations
         if self.temp_log_dir:
             self.log_dir = self.temp_log_dir
+        elif os.getenv("OPTILLM_CONVERSATION_LOG_DIR"):
+            self.log_dir = Path(os.getenv("OPTILLM_CONVERSATION_LOG_DIR"))
         else:
             self.log_dir = Path.home() / ".optillm" / "conversations"
-        
+
         # Record initial state for comparison
         self.initial_log_files = set(self.log_dir.glob("*.jsonl")) if self.log_dir.exists() else set()
     

@@ -201,11 +201,12 @@ jobs:
         OPTILLM_API_KEY=optillm python -m pytest tests/test_conversation_logging_approaches.py -v --tb=short
 
         echo "Running conversation logging server tests..."
-        OPTILLM_API_KEY=optillm python -m pytest tests/test_conversation_logging_server.py -v --tb=short
+        OPTILLM_API_KEY=optillm OPTILLM_CONVERSATION_LOG_DIR=/tmp/optillm_conversations python -m pytest tests/test_conversation_logging_server.py -v --tb=short
 
         echo "All conversation logging tests completed successfully!"
       env:
         OPTILLM_API_KEY: optillm
+        OPTILLM_CONVERSATION_LOG_DIR: /tmp/optillm_conversations
         HF_TOKEN: ${{ secrets.HF_TOKEN }}
 
     - name: Stop optillm server
