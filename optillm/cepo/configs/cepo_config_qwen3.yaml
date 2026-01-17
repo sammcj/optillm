@@ -16,6 +16,7 @@ planning_max_tokens_step3: 20481
 planning_max_tokens_step4: 20482
 use_plan_diversity: False
 rating_model: null
+use_reasoning: True
 use_reasoning_fallback: False
 num_of_retries: 0
 print_output: False
