@@ -94,6 +94,8 @@ class TestConversationLoggingWithServer(unittest.TestCase):
         env["OPTILLM_API_KEY"] = "optillm"
         env["OPTILLM_LOG_CONVERSATIONS"] = "true"
         env["OPTILLM_CONVERSATION_LOG_DIR"] = str(cls.temp_log_dir)
+        # Enable MPS fallback to CPU for unsupported operations (fixes macOS compatibility)
+        env["PYTORCH_ENABLE_MPS_FALLBACK"] = "1"
 
         # Get the project root directory (parent of tests directory)
         project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

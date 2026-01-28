@@ -42,6 +42,8 @@ def start_test_server(model: str = TEST_MODEL, port: int = 8000) -> subprocess.P
     # Set environment for local inference
     env = os.environ.copy()
     env["OPTILLM_API_KEY"] = "optillm"
+    # Enable MPS fallback to CPU for unsupported operations (fixes macOS compatibility)
+    env["PYTORCH_ENABLE_MPS_FALLBACK"] = "1"
 
     # Get the project root directory (parent of tests directory)
     project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
