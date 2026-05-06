@@ -32,7 +32,8 @@ def test_plugin_module_imports():
         'optillm.plugins.longcepo_plugin',
         'optillm.plugins.spl_plugin',
         'optillm.plugins.proxy_plugin',
-        'optillm.plugins.mcp_plugin'
+        'optillm.plugins.mcp_plugin',
+        'optillm.plugins.compact_plugin'
     ]
     
     for module_name in plugin_modules:
@@ -53,7 +54,7 @@ def test_plugin_approach_detection():
     load_plugins()
     
     # Check if known plugins are loaded
-    expected_plugins = ["memory", "readurls", "privacy", "web_search", "deep_research", "deepthink", "longcepo", "spl", "proxy", "mcp"]
+    expected_plugins = ["memory", "readurls", "privacy", "web_search", "deep_research", "deepthink", "longcepo", "spl", "proxy", "mcp", "compact"]
     for plugin_name in expected_plugins:
         assert plugin_name in plugin_approaches, f"Plugin {plugin_name} not loaded"
 
@@ -302,6 +303,14 @@ def test_mcp_plugin():
     assert hasattr(plugin, 'MCPServer')
     assert hasattr(plugin, 'execute_tool')
     assert plugin.SLUG == "mcp"
+
+
+def test_compact_plugin():
+    """Test compact plugin module"""
+    import optillm.plugins.compact_plugin as plugin
+    assert hasattr(plugin, 'run')
+    assert hasattr(plugin, 'SLUG')
+    assert plugin.SLUG == "compact"
 
 
 def test_plugin_subdirectory_imports():
