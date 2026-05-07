@@ -84,7 +84,7 @@ jobs:
     - name: Start optillm server
       run: |
         echo "Starting optillm server for integration tests..."
-        OPTILLM_API_KEY=optillm python optillm.py --model google/gemma-3-270m-it --port 8000 &
+        OPTILLM_API_KEY=optillm python optillm.py --model Qwen/Qwen2.5-Coder-0.5B-Instruct --port 8000 &
         echo $! > server.pid
         
         # Wait for server to be ready
@@ -179,7 +179,7 @@ jobs:
         echo "Starting optillm server with conversation logging..."
         mkdir -p /tmp/optillm_conversations
         OPTILLM_API_KEY=optillm python optillm.py \
-          --model google/gemma-3-270m-it \
+          --model Qwen/Qwen2.5-Coder-0.5B-Instruct \
           --port 8000 \
           --log-conversations \
           --conversation-log-dir /tmp/optillm_conversations &
