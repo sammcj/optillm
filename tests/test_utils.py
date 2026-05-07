@@ -12,8 +12,8 @@ from typing import Optional
 from openai import OpenAI
 
 # Standard test model for all tests - small and fast
-TEST_MODEL = "google/gemma-3-270m-it"
-TEST_MODEL_MLX = "mlx-community/gemma-3-270m-it-bf16"
+TEST_MODEL = "Qwen/Qwen2.5-Coder-0.5B-Instruct"
+TEST_MODEL_MLX = "mlx-community/Qwen2.5-Coder-0.5B-Instruct-bf16"
 
 def setup_test_env():
     """Set up test environment with local inference"""
