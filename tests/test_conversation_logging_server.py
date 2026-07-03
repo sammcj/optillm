@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Server-based integration tests for conversation logging with real model
-Tests conversation logging with actual OptILLM server and Qwen/Qwen2.5-Coder-0.5B-Instruct model
+Tests conversation logging with actual OptILLM server and codelion/dhara-250m model
 """
 
 import unittest
